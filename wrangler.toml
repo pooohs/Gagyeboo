@@ -1,14 +1,12 @@
 # ==============================================================
-# Cloudflare Pages / Workers 설정 파일 (wrangler.toml)
+# Cloudflare Pages 설정 파일 (wrangler.toml)
 # ==============================================================
-name = "house-account-book"
+name = "gagyeboo"
 compatibility_date = "2024-09-23"
 pages_build_output_dir = "dist"
 
 # Cloudflare D1 SQL 데이터베이스 바인딩
-# 실제 배포 전: npx wrangler d1 create account-book-db
-# 명령어로 생성된 database_id를 아래에 입력해 주시면 됩니다.
 [[d1_databases]]
 binding = "DB"
 database_name = "account-book-db"
-database_id = "your-d1-database-id-here"
+database_id = "417b5f74-2d83-46be-85bc-b00457ff5191"
