@@ -126,3 +126,5 @@ Thumbs.db
 # Cloudflare Wrangler & Local dev
 .wrangler/
 local-d1-mock.json
+._*
+.AppleDouble
