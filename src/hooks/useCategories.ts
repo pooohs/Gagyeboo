@@ -64,6 +64,25 @@ export function useCategories() {
     [expenseCategories, incomeCategories]
   );
 
+  const deleteSubCategory = useCallback(
+    (type: TransactionType, mainCategory: string, subCategory: string) => {
+      const setter = type === 'income' ? setIncomeCategories : setExpenseCategories;
+      setter((prev) => {
+        if (!prev[mainCategory]) return prev;
+        return {
+          ...prev,
+          [mainCategory]: {
+            ...prev[mainCategory],
+            subCategories: prev[mainCategory].subCategories.filter(
+              (s) => s !== subCategory
+            ),
+          },
+        };
+      });
+    },
+    []
+  );
+
   const resetToDefaults = useCallback(() => {
     setExpenseCategories(DEFAULT_EXPENSE_CATEGORIES);
     setIncomeCategories(DEFAULT_INCOME_CATEGORIES);
@@ -75,6 +94,7 @@ export function useCategories() {
     incomeCategories,
     getCategoriesByType,
     addSubCategory,
+    deleteSubCategory,
     resetToDefaults,
   };
 }
