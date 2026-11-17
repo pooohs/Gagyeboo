@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { CategoryLookup, TransactionType } from '../../types/transaction';
-import { X, Plus, RotateCcw, Tag, Layers } from 'lucide-react';
+import { CategoryLookup, Transaction, TransactionType } from '../../types/transaction';
+import { X, Plus, RotateCcw, Tag, Layers, AlertTriangle } from 'lucide-react';
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -12,6 +12,12 @@ interface CategoryModalProps {
     mainCategory: string,
     newSubCategory: string
   ) => boolean;
+  onDeleteSubCategory: (
+    type: TransactionType,
+    mainCategory: string,
+    subCategory: string
+  ) => void;
+  transactions: Transaction[];
   onResetToDefaults: () => void;
 }
 
@@ -21,11 +27,20 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   expenseCategories,
   incomeCategories,
   onAddSubCategory,
+  onDeleteSubCategory,
+  transactions,
   onResetToDefaults,
 }) => {
   const [activeType, setActiveType] = useState<TransactionType>('expense');
   const [selectedMain, setSelectedMain] = useState<string>('');
   const [newSubInput, setNewSubInput] = useState<string>('');
+  // 삭제 확인 대기 중인 소분류
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+
+  // 대분류/유형이 바뀌면 삭제 확인 창은 닫는다
+  React.useEffect(() => {
+    setPendingDelete(null);
+  }, [activeType, selectedMain, isOpen]);
 
   const currentCategories =
     activeType === 'income' ? incomeCategories : expenseCategories;
@@ -41,6 +56,23 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   if (!isOpen) return null;
 
   const currentCategoryData = currentCategories[selectedMain];
+
+  // 해당 소분류로 분류된 거래 건수
+  const countUsage = (sub: string) =>
+    transactions.filter(
+      (t) =>
+        t.type === activeType &&
+        t.mainCategory === selectedMain &&
+        t.subCategory === sub
+    ).length;
+
+  const pendingUsage = pendingDelete ? countUsage(pendingDelete) : 0;
+
+  const handleConfirmDelete = () => {
+    if (!pendingDelete) return;
+    onDeleteSubCategory(activeType, selectedMain, pendingDelete);
+    setPendingDelete(null);
+  };
 
   const handleAddSub = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +100,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 2단계 카테고리 관리 (Lookup Table)
               </h3>
               <p className="text-xs text-slate-400">
-                대분류와 소분류 구조를 확인하고 새로운 소분류를 추가할 수 있습니다.
+                대분류와 소분류 구조를 확인하고 소분류를 추가하거나 삭제할 수 있습니다.
               </p>
             </div>
           </div>
@@ -175,9 +207,59 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200/60"
                   >
                     <span>{sub}</span>
+                    <button
+                      type="button"
+                      onClick={() => setPendingDelete(sub)}
+                      aria-label={`${sub} 삭제`}
+                      className="text-slate-400 hover:text-rose-600 transition"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </span>
                 ))}
               </div>
+
+              {/* 삭제 확인 */}
+              {pendingDelete && (
+                <div
+                  role="alertdialog"
+                  className="mt-4 p-3 rounded-xl border border-rose-200 bg-rose-50"
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 mt-0.5 shrink-0" />
+                    <div className="text-xs text-rose-800 space-y-1">
+                      <p className="font-bold">
+                        '{pendingDelete}' 소분류를 삭제할까요?
+                      </p>
+                      {pendingUsage > 0 ? (
+                        <p>
+                          이 소분류로 분류된 거래가{' '}
+                          <b>{pendingUsage}건</b> 있습니다. 그래도 삭제하시겠습니까?
+                          거래 내역은 그대로 남지만 카테고리 목록에서는 사라집니다.
+                        </p>
+                      ) : (
+                        <p>이 소분류로 분류된 거래는 없습니다.</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setPendingDelete(null)}
+                      className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmDelete}
+                      className="px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 신규 소분류 추가 입력 폼 */}

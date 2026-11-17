@@ -22,6 +22,7 @@ export const App: React.FC = () => {
     expenseCategories,
     incomeCategories,
     addSubCategory,
+    deleteSubCategory,
     resetToDefaults,
   } = useCategories();
 
@@ -268,6 +269,8 @@ export const App: React.FC = () => {
         expenseCategories={expenseCategories}
         incomeCategories={incomeCategories}
         onAddSubCategory={addSubCategory}
+        onDeleteSubCategory={deleteSubCategory}
+        transactions={transactions}
         onResetToDefaults={resetToDefaults}
       />
 
