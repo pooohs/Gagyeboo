@@ -107,7 +107,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, prevSummary
               summary.balance >= 0 ? 'text-slate-900' : 'text-rose-600'
             }`}
           >
-            {formatCurrency(summary.balance, false)}
+            {formatCurrency(summary.balance, true)}
           </p>
           <div className="mt-2 flex items-center gap-2 text-xs">
             {savingsRate !== null ? (
