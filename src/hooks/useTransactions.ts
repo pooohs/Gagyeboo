@@ -322,6 +322,23 @@ export function useTransactions(initialMonth: string = getCurrentYearMonth()) {
     }
   }, []);
 
+  // 기존 내역은 유지하고 새 거래만 추가 (CSV 불러오기용). 로컬 저장은 effect가 처리
+  const mergeTransactions = useCallback(async (added: Transaction[]) => {
+    if (added.length === 0) return;
+    setTransactions((prev) => [...added, ...prev]);
+    setSelectedMonth(getCurrentYearMonth());
+
+    try {
+      setIsSyncing(true);
+      await bulkImportTransactionsApi(added);
+      setLastSyncedAt(new Date());
+    } catch (err) {
+      console.warn('클라우드 일괄 업로드 실패 (로컬 저장 유지):', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
   // 거래 내역 단건 삭제
   const deleteTransaction = useCallback((id: string) => {
     setTransactions((prev) => prev.filter((tx) => tx.id !== id));
@@ -375,6 +392,7 @@ export function useTransactions(initialMonth: string = getCurrentYearMonth()) {
     deleteTransaction,
     deleteMultipleTransactions,
     importTransactions,
+    mergeTransactions,
     resetTransactions,
   };
 }
