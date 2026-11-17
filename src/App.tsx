@@ -13,6 +13,7 @@ import { ToastContainer } from './components/common/Toast';
 import { Transaction, ToastMessage } from './types/transaction';
 import { exportToJsonFile, importFromJsonFile } from './utils/fileStorage';
 import { exportAllTransactionsToCsv } from './utils/csvExport';
+import { importFromCsvFile, filterNewTransactions } from './utils/csvImport';
 import { getCurrentYearMonth } from './utils/formatters';
 
 export const App: React.FC = () => {
@@ -42,6 +43,7 @@ export const App: React.FC = () => {
     updateTransaction,
     deleteTransaction,
     importTransactions,
+    mergeTransactions,
     resetTransactions,
   } = useTransactions(getCurrentYearMonth());
 
@@ -114,6 +116,48 @@ export const App: React.FC = () => {
     }
   };
 
+  // CSV 백업 파일 불러오기: 기존 내역은 유지하고 중복을 제외한 새 거래만 추가
+  const handleImportCsv = async (file: File) => {
+    try {
+      const { transactions: parsed, errors } = await importFromCsvFile(file);
+      const fresh = filterNewTransactions(transactions, parsed);
+      const skipped = parsed.length - fresh.length;
+
+      if (fresh.length === 0) {
+        addToast(
+          `파일의 ${parsed.length}건이 모두 이미 등록되어 있어 새로 추가된 내역이 없습니다.`,
+          'info'
+        );
+        return;
+      }
+
+      const errorNote = errors.length > 0 ? `\n(읽지 못한 ${errors.length}줄은 제외됩니다)` : '';
+      const ok = window.confirm(
+        `${file.name}\n\n파일 ${parsed.length}건 중 새 거래 ${fresh.length}건을 추가합니다.\n` +
+          `이미 있는 ${skipped}건은 건너뛰며, 현재 내역 ${transactions.length}건은 그대로 유지됩니다.${errorNote}\n\n불러올까요?`
+      );
+      if (!ok) return;
+
+      await mergeTransactions(fresh);
+      setSelectedCategoryFilter(null);
+      addToast(
+        `${fresh.length}건을 추가했습니다. (중복 ${skipped}건 제외${errors.length > 0 ? `, 읽지 못한 ${errors.length}줄` : ''})`,
+        errors.length > 0 ? 'info' : 'success'
+      );
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'CSV 불러오기 중 오류가 발생했습니다.';
+      addToast(msg, 'error');
+    }
+  };
+
+  // 불러오기: 확장자에 따라 CSV / JSON 처리
+  const handleImportFile = (file: File) => {
+    if (file.name.toLowerCase().endsWith('.csv')) {
+      return handleImportCsv(file);
+    }
+    return handleImportJson(file);
+  };
+
   // JSON 파일 불러오기(업로드)
   const handleImportJson = async (file: File) => {
     try {
@@ -151,7 +195,7 @@ export const App: React.FC = () => {
         onOpenCategoryModal={() => setIsCategoryModalOpen(true)}
         onResetData={handleResetData}
         onBackupJson={handleBackupJson}
-        onImportJson={handleImportJson}
+        onImportJson={handleImportFile}
         onBackupAllCsv={handleBackupAllCsv}
         isSyncing={isSyncing}
         lastSyncedAt={lastSyncedAt}

@@ -92,7 +92,14 @@ function localD1MockPlugin(): Plugin {
               const data = JSON.parse(bodyData || '{}');
               // 일괄 배치 등록
               if (Array.isArray(data)) {
-                writeMockData(data);
+                // 배포 환경(D1 INSERT OR REPLACE)과 동일하게 id 기준으로 추가/갱신 (기존 데이터는 유지)
+                const byId = new Map<string, any>(
+                  transactions.map((tx: any) => [String(tx.id), tx])
+                );
+                for (const tx of data) {
+                  byId.set(String(tx.id), tx);
+                }
+                writeMockData([...byId.values()]);
                 res.statusCode = 201;
                 res.end(JSON.stringify({ success: true, count: data.length }));
                 return;

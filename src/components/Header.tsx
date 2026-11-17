@@ -130,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
         <input
           type="file"
           ref={fileInputRef}
-          accept=".json,application/json"
+          accept=".json,.csv,application/json,text/csv"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -189,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 rounded-xl transition shadow-2xs active:scale-95"
-            title="PC에 저장된 JSON 가계부 파일 불러오기"
+            title="PC에 저장된 가계부 파일(CSV 또는 JSON) 불러오기"
           >
             <Upload className="w-4 h-4 text-blue-600" />
             <span className="hidden lg:inline">불러오기</span>
